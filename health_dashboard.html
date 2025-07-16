@@ -229,51 +229,7 @@
             border-color: #667eea;
         }
 
-        /* Trend Statistics */
-        .trend-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid #e2e8f0;
-        }
 
-        .stat-item {
-            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            border-left: 4px solid #667eea;
-        }
-
-        .stat-label {
-            display: block;
-            font-size: 12px;
-            color: #4a5568;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #2d3748;
-        }
-
-        .stat-value.positive {
-            color: #38a169;
-        }
-
-        .stat-value.negative {
-            color: #e53e3e;
-        }
-
-        .stat-value.warning {
-            color: #d69e2e;
-        }
 
         /* Chat Styling */
         .chat-container {
@@ -395,10 +351,6 @@
             .trend-btn {
                 padding: 8px 12px;
                 font-size: 12px;
-            }
-
-            .trend-stats {
-                grid-template-columns: repeat(2, 1fr);
             }
 
             .chart-container {
@@ -525,44 +477,26 @@
         </div>
 
         <div class="card">
-            <h2><i class="fas fa-chart-line"></i> Health Trends & History</h2>
+            <h2><i class="fas fa-chart-line"></i> Health Metrics Analysis</h2>
             <div class="trend-controls">
                 <button class="trend-btn active" onclick="showChart('overview')">
                     <i class="fas fa-chart-line"></i> Overview
                 </button>
                 <button class="trend-btn" onclick="showChart('glucose')">
-                    <i class="fas fa-tint"></i> Glucose
+                    <i class="fas fa-tint"></i> Glucose Focus
                 </button>
                 <button class="trend-btn" onclick="showChart('bmi')">
-                    <i class="fas fa-weight"></i> BMI
+                    <i class="fas fa-weight"></i> BMI Analysis
                 </button>
                 <button class="trend-btn" onclick="showChart('bp')">
                     <i class="fas fa-heartbeat"></i> Blood Pressure
                 </button>
-                <button class="trend-btn" onclick="showChart('detailed')">
-                    <i class="fas fa-chart-bar"></i> Detailed View
+                <button class="trend-btn" onclick="showChart('comparison')">
+                    <i class="fas fa-chart-bar"></i> Comparison
                 </button>
             </div>
             <div class="chart-container">
                 <canvas id="trendChart"></canvas>
-            </div>
-            <div class="trend-stats">
-                <div class="stat-item">
-                    <span class="stat-label">Average Glucose</span>
-                    <span class="stat-value" id="avgGlucose">--</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">BMI Trend</span>
-                    <span class="stat-value" id="bmiTrend">--</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">BP Status</span>
-                    <span class="stat-value" id="bpStatus">--</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Risk Level</span>
-                    <span class="stat-value" id="riskLevel">--</span>
-                </div>
             </div>
         </div>
     </div>
@@ -658,56 +592,9 @@
         }
     });
 
-    // Historical Health Data (Sample data for demonstration)
-    const healthHistory = generateHealthHistory(formData);
-    
     // Initialize trend chart
     let trendChart = null;
     let currentView = 'overview';
-
-    function generateHealthHistory(currentData) {
-        const history = [];
-        const today = new Date();
-        
-        // Generate 30 days of sample historical data
-        for (let i = 29; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(date.getDate() - i);
-            
-            // Create realistic variations around current values
-            const variation = (Math.random() - 0.5) * 0.2; // ±10% variation
-            
-            history.push({
-                date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                glucose: Math.max(70, Math.min(200, currentData.glucose + (currentData.glucose * variation))),
-                bmi: Math.max(15, Math.min(40, currentData.bmi + (currentData.bmi * variation * 0.1))),
-                bp: Math.max(90, Math.min(180, currentData.bp + (currentData.bp * variation))),
-                insulin: Math.max(0, Math.min(300, currentData.insulin + (currentData.insulin * variation))),
-                riskScore: Math.max(0, Math.min(100, resultData.risk_score + (20 * variation)))
-            });
-        }
-        
-        return history;
-    }
-
-    function updateTrendStats(data) {
-        const avgGlucose = data.reduce((sum, item) => sum + item.glucose, 0) / data.length;
-        const bmiTrend = data[data.length - 1].bmi - data[0].bmi;
-        const avgBP = data.reduce((sum, item) => sum + item.bp, 0) / data.length;
-        const avgRisk = data.reduce((sum, item) => sum + item.riskScore, 0) / data.length;
-
-        document.getElementById('avgGlucose').textContent = avgGlucose.toFixed(1) + ' mg/dL';
-        document.getElementById('avgGlucose').className = 'stat-value ' + (avgGlucose > 140 ? 'negative' : avgGlucose > 100 ? 'warning' : 'positive');
-
-        document.getElementById('bmiTrend').textContent = (bmiTrend >= 0 ? '+' : '') + bmiTrend.toFixed(1);
-        document.getElementById('bmiTrend').className = 'stat-value ' + (Math.abs(bmiTrend) > 1 ? 'warning' : 'positive');
-
-        document.getElementById('bpStatus').textContent = avgBP.toFixed(0) + ' mmHg';
-        document.getElementById('bpStatus').className = 'stat-value ' + (avgBP > 140 ? 'negative' : avgBP > 120 ? 'warning' : 'positive');
-
-        document.getElementById('riskLevel').textContent = avgRisk.toFixed(0) + '%';
-        document.getElementById('riskLevel').className = 'stat-value ' + (avgRisk > 70 ? 'negative' : avgRisk > 40 ? 'warning' : 'positive');
-    }
 
     function createTrendChart(view) {
         const ctx = document.getElementById('trendChart').getContext('2d');
@@ -716,49 +603,49 @@
             trendChart.destroy();
         }
 
-        const labels = healthHistory.map(item => item.date);
         let datasets = [];
         let chartType = 'line';
+        let labels = ['Current Reading'];
 
         switch (view) {
             case 'overview':
                 datasets = [
                     {
                         label: 'Glucose Level (mg/dL)',
-                        data: healthHistory.map(item => item.glucose),
+                        data: [formData.glucose],
                         borderColor: '#f56565',
-                        backgroundColor: 'rgba(245, 101, 101, 0.1)',
-                        borderWidth: 3,
+                        backgroundColor: 'rgba(245, 101, 101, 0.2)',
+                        borderWidth: 4,
                         pointBackgroundColor: '#f56565',
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
+                        pointBorderWidth: 3,
+                        pointRadius: 12,
                         tension: 0.4,
                         yAxisID: 'y'
                     },
                     {
                         label: 'BMI',
-                        data: healthHistory.map(item => item.bmi),
+                        data: [formData.bmi],
                         borderColor: '#48bb78',
-                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
-                        borderWidth: 3,
+                        backgroundColor: 'rgba(72, 187, 120, 0.2)',
+                        borderWidth: 4,
                         pointBackgroundColor: '#48bb78',
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
+                        pointBorderWidth: 3,
+                        pointRadius: 12,
                         tension: 0.4,
                         yAxisID: 'y1'
                     },
                     {
                         label: 'Risk Score (%)',
-                        data: healthHistory.map(item => item.riskScore),
+                        data: [resultData.risk_score],
                         borderColor: '#9f7aea',
-                        backgroundColor: 'rgba(159, 122, 234, 0.1)',
-                        borderWidth: 3,
+                        backgroundColor: 'rgba(159, 122, 234, 0.2)',
+                        borderWidth: 4,
                         pointBackgroundColor: '#9f7aea',
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
+                        pointBorderWidth: 3,
+                        pointRadius: 12,
                         tension: 0.4,
                         yAxisID: 'y2'
                     }
@@ -766,85 +653,107 @@
                 break;
 
             case 'glucose':
+                chartType = 'doughnut';
+                labels = ['Current Glucose', 'Optimal Range Remaining'];
+                const glucoseOptimal = 100;
+                const glucoseDiff = Math.max(0, glucoseOptimal - formData.glucose);
                 datasets = [
                     {
-                        label: 'Glucose Level (mg/dL)',
-                        data: healthHistory.map(item => item.glucose),
-                        borderColor: '#f56565',
-                        backgroundColor: 'rgba(245, 101, 101, 0.2)',
-                        borderWidth: 4,
-                        pointBackgroundColor: '#f56565',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 3,
-                        pointRadius: 6,
-                        tension: 0.4,
-                        fill: true
+                        label: 'Glucose Analysis',
+                        data: [formData.glucose, glucoseDiff > 0 ? glucoseDiff : formData.glucose - glucoseOptimal],
+                        backgroundColor: [
+                            formData.glucose > 140 ? '#f56565' : formData.glucose > 100 ? '#f6ad55' : '#48bb78',
+                            '#e2e8f0'
+                        ],
+                        borderColor: ['#fff', '#fff'],
+                        borderWidth: 3
                     }
                 ];
                 break;
 
             case 'bmi':
+                chartType = 'polarArea';
+                labels = ['BMI Value', 'Normal Range (18.5-24.9)', 'Your Status'];
+                const bmiCategories = [
+                    formData.bmi,
+                    24.9, // Normal upper limit
+                    formData.bmi > 24.9 ? formData.bmi - 24.9 : 24.9 - formData.bmi
+                ];
                 datasets = [
                     {
-                        label: 'BMI Trend',
-                        data: healthHistory.map(item => item.bmi),
-                        borderColor: '#48bb78',
-                        backgroundColor: 'rgba(72, 187, 120, 0.2)',
-                        borderWidth: 4,
-                        pointBackgroundColor: '#48bb78',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 3,
-                        pointRadius: 6,
-                        tension: 0.4,
-                        fill: true
+                        label: 'BMI Analysis',
+                        data: bmiCategories,
+                        backgroundColor: [
+                            formData.bmi < 18.5 ? '#4299e1' : formData.bmi > 24.9 ? '#f56565' : '#48bb78',
+                            '#68d391',
+                            '#e2e8f0'
+                        ],
+                        borderColor: '#fff',
+                        borderWidth: 2
                     }
                 ];
                 break;
 
             case 'bp':
+                chartType = 'radar';
+                labels = ['Systolic Pressure', 'Health Risk', 'Optimal Range', 'Current Status'];
                 datasets = [
                     {
-                        label: 'Blood Pressure (mmHg)',
-                        data: healthHistory.map(item => item.bp),
-                        borderColor: '#4299e1',
+                        label: 'Blood Pressure Analysis',
+                        data: [
+                            Math.min(formData.bp, 200),
+                            formData.bp > 140 ? 80 : formData.bp > 120 ? 40 : 10,
+                            120, // Optimal BP
+                            100 // Full status
+                        ],
                         backgroundColor: 'rgba(66, 153, 225, 0.2)',
-                        borderWidth: 4,
+                        borderColor: '#4299e1',
+                        borderWidth: 3,
                         pointBackgroundColor: '#4299e1',
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 3,
-                        pointRadius: 6,
-                        tension: 0.4,
-                        fill: true
+                        pointBorderWidth: 2,
+                        pointRadius: 6
                     }
                 ];
                 break;
 
-            case 'detailed':
+            case 'comparison':
                 chartType = 'bar';
+                labels = ['Glucose', 'BMI x10', 'BP', 'Insulin/10', 'Risk Score'];
                 datasets = [
                     {
-                        label: 'Glucose',
-                        data: healthHistory.slice(-7).map(item => item.glucose),
-                        backgroundColor: 'rgba(245, 101, 101, 0.8)',
-                        borderColor: '#f56565',
+                        label: 'Current Values',
+                        data: [
+                            formData.glucose,
+                            formData.bmi * 10,
+                            formData.bp,
+                            formData.insulin / 10,
+                            resultData.risk_score
+                        ],
+                        backgroundColor: [
+                            '#f56565',
+                            '#48bb78',
+                            '#4299e1',
+                            '#9f7aea',
+                            '#f6ad55'
+                        ],
+                        borderColor: [
+                            '#e53e3e',
+                            '#38a169',
+                            '#3182ce',
+                            '#805ad5',
+                            '#ed8936'
+                        ],
                         borderWidth: 2
                     },
                     {
-                        label: 'BMI x 10',
-                        data: healthHistory.slice(-7).map(item => item.bmi * 10),
-                        backgroundColor: 'rgba(72, 187, 120, 0.8)',
-                        borderColor: '#48bb78',
-                        borderWidth: 2
-                    },
-                    {
-                        label: 'Risk Score',
-                        data: healthHistory.slice(-7).map(item => item.riskScore),
-                        backgroundColor: 'rgba(159, 122, 234, 0.8)',
-                        borderColor: '#9f7aea',
+                        label: 'Optimal Ranges',
+                        data: [100, 220, 120, 10, 20], // Optimal values for comparison
+                        backgroundColor: 'rgba(72, 187, 120, 0.3)',
+                        borderColor: '#38a169',
                         borderWidth: 2
                     }
                 ];
-                labels = healthHistory.slice(-7).map(item => item.date);
                 break;
         }
 
@@ -854,10 +763,6 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
                 plugins: {
                     legend: {
                         position: 'top',
@@ -876,41 +781,62 @@
                         cornerRadius: 10,
                         displayColors: true
                     }
-                },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
-                        ticks: { font: { size: 12 } }
-                    },
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
-                        ticks: { font: { size: 12 } }
-                    }
                 }
             }
         };
 
-        // Add multiple y-axes for overview
-        if (view === 'overview') {
-            config.options.scales.y1 = {
-                type: 'linear',
-                display: true,
-                position: 'right',
-                grid: { drawOnChartArea: false },
-                ticks: { font: { size: 12 } }
+        // Add scales for line and bar charts
+        if (chartType === 'line' || chartType === 'bar') {
+            config.options.scales = {
+                x: {
+                    grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                    ticks: { font: { size: 12 } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                    ticks: { font: { size: 12 } }
+                }
             };
-            config.options.scales.y2 = {
-                type: 'linear',
-                display: false,
-                position: 'right'
+
+            // Add multiple y-axes for overview
+            if (view === 'overview') {
+                config.options.scales.y1 = {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: { font: { size: 12 } },
+                    beginAtZero: true
+                };
+                config.options.scales.y2 = {
+                    type: 'linear',
+                    display: false,
+                    position: 'right',
+                    beginAtZero: true
+                };
+            }
+        }
+
+        // Special configuration for radar charts
+        if (chartType === 'radar') {
+            config.options.scales = {
+                r: {
+                    beginAtZero: true,
+                    max: 200,
+                    ticks: {
+                        stepSize: 40,
+                        font: { size: 12 }
+                    },
+                    grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                    pointLabels: {
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
             };
         }
 
         trendChart = new Chart(ctx, config);
-        updateTrendStats(healthHistory);
     }
 
     // Initialize with overview chart
