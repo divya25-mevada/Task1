@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health AI Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+
+        .flash-messages ul {
+            list-style: none;
+        }
+
+        .flash-messages li {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2 i {
+            color: #667eea;
+        }
+
+        /* Form Styling */
+        .prediction-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .form-group input::placeholder {
+            color: #a0aec0;
+        }
+
+        .submit-btn {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Results Styling */
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .result-item {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .result-item strong {
+            color: #4a5568;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-item .value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .prediction-positive {
+            border-left-color: #e53e3e;
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+        }
+
+        .prediction-negative {
+            border-left-color: #38a169;
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+        }
+
+        /* Chart Containers */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+        }
+
+        /* Chat Styling */
+        .chat-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f7fafc;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 #f7fafc;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: #f7fafc;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            margin-right: auto;
+            text-align: left;
+            border-bottom-left-radius: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .chat-send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .chat-send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .prediction-form {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chat-message {
+                max-width: 90%;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Success/Error States */
+        .success {
+            color: #38a169;
+        }
+
+        .error {
+            color: #e53e3e;
+        }
+
+        .warning {
+            color: #d69e2e;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-heartbeat"></i> Health AI Dashboard</h1>
+        <p class="subtitle">Welcome, {{ username }} - Your Personal Health Assistant</p>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                <ul>
+                    {% for msg in messages %}
+                        <li><i class="fas fa-info-circle"></i> {{ msg }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <h2><i class="fas fa-user-md"></i> Health Prediction Assessment</h2>
+        <form method="POST" class="prediction-form">
+            <div class="form-group">
+                <input type="number" name="age" placeholder="Age (years)" required min="1" max="120">
+            </div>
+            <div class="form-group">
+                <input type="number" step="0.1" name="bmi" placeholder="BMI (Body Mass Index)" required min="10" max="50">
+            </div>
+            <div class="form-group">
+                <input type="number" name="bp" placeholder="Blood Pressure (mmHg)" required min="50" max="250">
+            </div>
+            <div class="form-group">
+                <input type="number" name="glucose" placeholder="Glucose Level (mg/dL)" required min="50" max="400">
+            </div>
+            <div class="form-group">
+                <input type="number" name="insulin" placeholder="Insulin Level (μU/mL)" required min="0" max="1000">
+            </div>
+            <div class="form-group">
+                <input type="number" name="preg" placeholder="Number of Pregnancies" required min="0" max="20">
+            </div>
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-chart-line"></i> Analyze Health Data
+            </button>
+        </form>
+    </div>
+
+    {% if result %}
+    <div class="card">
+        <h2><i class="fas fa-clipboard-check"></i> Health Assessment Results</h2>
+        <div class="result-grid">
+            <div class="result-item {{ 'prediction-positive' if result.prediction else 'prediction-negative' }}">
+                <strong>Health Status</strong>
+                <div class="value">
+                    <i class="fas {{ 'fa-exclamation-triangle' if result.prediction else 'fa-check-circle' }}"></i>
+                    {{ 'At Risk - Requires Attention' if result.prediction else 'Healthy - Good Indicators' }}
+                </div>
+            </div>
+            <div class="result-item">
+                <strong>Risk Score</strong>
+                <div class="value">{{ result.risk_score }}/100</div>
+            </div>
+            <div class="result-item">
+                <strong>BMI Category</strong>
+                <div class="value">{{ result.bmi_category }}</div>
+            </div>
+            <div class="result-item">
+                <strong>Glucose Status</strong>
+                <div class="value">{{ result.glucose_status }}</div>
+            </div>
+            <div class="result-item">
+                <strong>Blood Pressure</strong>
+                <div class="value">{{ result.bp_status }}</div>
+            </div>
+            <div class="result-item" style="grid-column: 1 / -1;">
+                <strong>Health Recommendations</strong>
+                <div class="value">{{ result.health_tips }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="card">
+            <h2><i class="fas fa-chart-radar"></i> Health Metrics Radar</h2>
+            <div class="chart-container">
+                <canvas id="healthChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-chart-line"></i> Health Trends</h2>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <h2><i class="fas fa-robot"></i> AI Health Assistant</h2>
+        <div class="chat-container" id="chatbox">
+            {% for user_msg, bot_msg in chat %}
+                <div class="chat-message user-message">{{ user_msg }}</div>
+                <div class="chat-message bot-message">{{ bot_msg }}</div>
+            {% endfor %}
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Ask your AI health assistant anything...">
+            <button onclick="sendMessage()" class="chat-send-btn">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+{% if result %}
+<script>
+    const resultData = {{ result | tojson }};
+    const formData = {
+        bmi: parseFloat({{ request.form['bmi'] | default(0, true) }}),
+        glucose: parseFloat({{ request.form['glucose'] | default(0, true) }}),
+        bp: parseFloat({{ request.form['bp'] | default(0, true) }}),
+        insulin: parseFloat({{ request.form['insulin'] | default(0, true) }}),
+        preg: parseInt({{ request.form['preg'] | default(0, true) }})
+    };
+
+    // Enhanced Radar Chart
+    new Chart(document.getElementById('healthChart'), {
+        type: 'radar',
+        data: {
+            labels: ['Risk Score', 'BMI', 'Glucose', 'Blood Pressure', 'Insulin', 'Pregnancies'],
+            datasets: [{
+                label: 'Your Health Metrics',
+                data: [
+                    resultData.risk_score,
+                    Math.min(formData.bmi * 2, 100),
+                    Math.min(formData.glucose / 2, 100),
+                    Math.min(formData.bp / 2, 100),
+                    Math.min(formData.insulin / 10, 100),
+                    Math.min(formData.preg * 10, 100)
+                ],
+                backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                borderColor: 'rgba(102, 126, 234, 1)',
+                borderWidth: 3,
+                pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20,
+                        font: {
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    pointLabels: {
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Enhanced Line Chart
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+            labels: ['Current Reading'],
+            datasets: [
+                {
+                    label: 'Glucose Level',
+                    data: [formData.glucose],
+                    borderColor: '#f56565',
+                    backgroundColor: 'rgba(245, 101, 101, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#f56565',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 8,
+                    tension: 0.4
+                },
+                {
+                    label: 'BMI',
+                    data: [formData.bmi],
+                    borderColor: '#48bb78',
+                    backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#48bb78',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 8,
+                    tension: 0.4
+                },
+                {
+                    label: 'Blood Pressure',
+                    data: [formData.bp],
+                    borderColor: '#4299e1',
+                    backgroundColor: 'rgba(66, 153, 225, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#4299e1',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 8,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+
+<script>
+    function sendMessage() {
+        const input = document.getElementById('userInput');
+        const message = input.value.trim();
+        if (!message) return;
+
+        const chatbox = document.getElementById('chatbox');
+        const sendBtn = document.querySelector('.chat-send-btn');
+        
+        // Add user message
+        chatbox.innerHTML += `<div class="chat-message user-message">${message}</div>`;
+        
+        // Show loading state
+        sendBtn.innerHTML = '<div class="loading"></div>';
+        sendBtn.disabled = true;
+
+        fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const botReply = data.response || data.error;
+            chatbox.innerHTML += `<div class="chat-message bot-message">${botReply}</div>`;
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .catch(error => {
+            chatbox.innerHTML += `<div class="chat-message bot-message error">Sorry, I'm having trouble responding right now. Please try again.</div>`;
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .finally(() => {
+            // Reset button
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            sendBtn.disabled = false;
+        });
+
+        input.value = '';
+    }
+
+    // Allow Enter key to send message
+    document.getElementById('userInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+</script>
+</body>
+</html>
