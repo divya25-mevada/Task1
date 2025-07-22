@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureBank Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --accent-color: #ffd700;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --gradient-primary: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --sidebar-width: 250px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: var(--gradient-primary);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-brand {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--accent-color);
+        }
+
+        .sidebar-nav i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .navbar-dashboard {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+        }
+
+        .content-wrapper {
+            padding: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: 10px 10px 0 0;
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Balance Cards */
+        .balance-card {
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Transaction Table */
+        .transaction-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .transaction-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+
+        .transaction-table td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .transaction-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .transaction-amount.positive {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .transaction-amount.negative {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        /* Forms */
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: bold;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-pending {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-blocked {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        /* Charts */
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* Quick Actions */
+        .quick-action {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .quick-action:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+        }
+
+        .quick-action i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .quick-action h6 {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* Page Visibility */
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .balance-amount {
+                font-size: 2rem;
+            }
+            
+            .content-wrapper {
+                padding: 1rem;
+            }
+        }
+
+        /* Utilities */
+        .text-primary-custom {
+            color: var(--primary-color) !important;
+        }
+
+        .bg-primary-custom {
+            background: var(--gradient-primary) !important;
+        }
+
+        .border-primary-custom {
+            border-color: var(--primary-color) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="#" class="sidebar-brand">
+                <i class="bi bi-bank"></i> SecureBank
+            </a>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="#" class="nav-link active" data-page="dashboard"><i class="bi bi-house-door"></i> Dashboard</a></li>
+            <li><a href="#" class="nav-link" data-page="accounts"><i class="bi bi-wallet"></i> Accounts</a></li>
+            <li><a href="#" class="nav-link" data-page="transfers"><i class="bi bi-arrow-left-right"></i> Transfers</a></li>
+            <li><a href="#" class="nav-link" data-page="transactions"><i class="bi bi-list-ul"></i> Transactions</a></li>
+            <li><a href="#" class="nav-link" data-page="bills"><i class="bi bi-receipt"></i> Bill Payment</a></li>
+            <li><a href="#" class="nav-link" data-page="cards"><i class="bi bi-credit-card"></i> Cards</a></li>
+            <li><a href="#" class="nav-link" data-page="loans"><i class="bi bi-bank2"></i> Loans</a></li>
+            <li><a href="#" class="nav-link" data-page="investments"><i class="bi bi-graph-up"></i> Investments</a></li>
+            <li><a href="#" class="nav-link" data-page="profile"><i class="bi bi-person"></i> Profile</a></li>
+            <li><a href="#" class="nav-link" data-page="settings"><i class="bi bi-gear"></i> Settings</a></li>
+            <li><a href="#" class="nav-link" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-dashboard">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-link d-md-none" id="sidebarToggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h4 class="mb-0 text-primary-custom" id="pageTitle">Dashboard</h4>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="dropdown">
+                        <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> John Doe
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item nav-link" href="#" data-page="profile">Profile</a></li>
+                            <li><a class="dropdown-item nav-link" href="#" data-page="settings">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Dashboard Page -->
+            <div class="page-content active" id="dashboard">
+                <!-- Balance Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="balance-card">
+                            <div class="balance-label">Checking Account</div>
+                            <div class="balance-amount">$12,485.50</div>
+                            <div class="balance-label">Account: ***1234</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="balance-card">
+                            <div class="balance-label">Savings Account</div>
+                            <div class="balance-amount">$45,230.75</div>
+                            <div class="balance-label">Account: ***5678</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="balance-card">
+                            <div class="balance-label">Credit Card</div>
+                            <div class="balance-amount">$2,150.00</div>
+                            <div class="balance-label">Available: $7,850.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mb-4">
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="quick-action" onclick="showPage('transfers')">
+                            <i class="bi bi-arrow-left-right"></i>
+                            <h6>Transfer Money</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="quick-action" onclick="showPage('bills')">
+                            <i class="bi bi-receipt"></i>
+                            <h6>Pay Bills</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="quick-action" onclick="showPage('cards')">
+                            <i class="bi bi-credit-card"></i>
+                            <h6>Manage Cards</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="quick-action" onclick="showPage('transactions')">
+                            <i class="bi bi-list-ul"></i>
+                            <h6>View Transactions</h6>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Recent Transactions -->
+                <div class="row">
+                    <div class="col-md-8 mb-4">
+                        <div class="chart-container">
+                            <h5 class="mb-3">Spending Overview</h5>
+                            <canvas id="spendingChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Recent Transactions
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Grocery Store</span>
+                                    <span class="transaction-amount negative">-$85.50</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Salary Deposit</span>
+                                    <span class="transaction-amount positive">+$4,200.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Electric Bill</span>
+                                    <span class="transaction-amount negative">-$125.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>ATM Withdrawal</span>
+                                    <span class="transaction-amount negative">-$200.00</span>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <a href="#" class="btn btn-primary btn-sm" onclick="showPage('transactions')">View All</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accounts Page -->
+            <div class="page-content" id="accounts">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Checking Account
+                            </div>
+                            <div class="card-body">
+                                <h4 class="text-primary-custom">$12,485.50</h4>
+                                <p class="text-muted">Account Number: ***1234</p>
+                                <p class="text-muted">Routing Number: 123456789</p>
+                                <span class="status-badge status-active">Active</span>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary btn-sm me-2">View Details</button>
+                                    <button class="btn btn-outline-primary btn-sm">Download Statement</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Savings Account
+                            </div>
+                            <div class="card-body">
+                                <h4 class="text-primary-custom">$45,230.75</h4>
+                                <p class="text-muted">Account Number: ***5678</p>
+                                <p class="text-muted">Interest Rate: 2.5% APY</p>
+                                <span class="status-badge status-active">Active</span>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary btn-sm me-2">View Details</button>
+                                    <button class="btn btn-outline-primary btn-sm">Download Statement</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Business Account
+                            </div>
+                            <div class="card-body">
+                                <h4 class="text-primary-custom">$8,750.25</h4>
+                                <p class="text-muted">Account Number: ***9012</p>
+                                <p class="text-muted">Account Type: Business Checking</p>
+                                <span class="status-badge status-active">Active</span>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary btn-sm me-2">View Details</button>
+                                    <button class="btn btn-outline-primary btn-sm">Download Statement</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Investment Account
+                            </div>
+                            <div class="card-body">
+                                <h4 class="text-primary-custom">$125,890.40</h4>
+                                <p class="text-muted">Account Number: ***3456</p>
+                                <p class="text-muted">Portfolio Value</p>
+                                <span class="status-badge status-active">Active</span>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary btn-sm me-2">View Portfolio</button>
+                                    <button class="btn btn-outline-primary btn-sm">Investment Report</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transfers Page -->
+            <div class="page-content" id="transfers">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="form-card">
+                            <h4 class="text-primary-custom mb-4">Transfer Money</h4>
+                            <form id="transferForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">From Account</label>
+                                            <select class="form-control" required>
+                                                <option value="">Select Account</option>
+                                                <option value="checking">Checking - ***1234 ($12,485.50)</option>
+                                                <option value="savings">Savings - ***5678 ($45,230.75)</option>
+                                                <option value="business">Business - ***9012 ($8,750.25)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">To Account</label>
+                                            <select class="form-control" required>
+                                                <option value="">Select Account</option>
+                                                <option value="internal">Internal Account</option>
+                                                <option value="external">External Account</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Amount</label>
+                                            <input type="number" class="form-control" step="0.01" placeholder="0.00" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Transfer Date</label>
+                                            <input type="date" class="form-control" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Description (Optional)</label>
+                                    <input type="text" class="form-control" placeholder="Transfer description">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-lg">Transfer Money</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Page -->
+            <div class="page-content" id="transactions">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Transaction History</span>
+                        <div>
+                            <button class="btn btn-outline-light btn-sm me-2">Filter</button>
+                            <button class="btn btn-outline-light btn-sm">Export</button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table transaction-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Category</th>
+                                        <th>Account</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Dec 15, 2023</td>
+                                        <td>Grocery Store</td>
+                                        <td>Food & Dining</td>
+                                        <td>***1234</td>
+                                        <td class="transaction-amount negative">-$85.50</td>
+                                        <td><span class="status-badge status-active">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dec 14, 2023</td>
+                                        <td>Salary Deposit</td>
+                                        <td>Income</td>
+                                        <td>***1234</td>
+                                        <td class="transaction-amount positive">+$4,200.00</td>
+                                        <td><span class="status-badge status-active">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dec 13, 2023</td>
+                                        <td>Electric Bill</td>
+                                        <td>Utilities</td>
+                                        <td>***1234</td>
+                                        <td class="transaction-amount negative">-$125.00</td>
+                                        <td><span class="status-badge status-active">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dec 12, 2023</td>
+                                        <td>ATM Withdrawal</td>
+                                        <td>Cash</td>
+                                        <td>***1234</td>
+                                        <td class="transaction-amount negative">-$200.00</td>
+                                        <td><span class="status-badge status-active">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dec 11, 2023</td>
+                                        <td>Transfer to Savings</td>
+                                        <td>Transfer</td>
+                                        <td>***1234</td>
+                                        <td class="transaction-amount negative">-$1,000.00</td>
+                                        <td><span class="status-badge status-active">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dec 10, 2023</td>
+                                        <td>Gas Station</td>
+                                        <td>Transportation</td>
+                                        <td>***1234</td>
+                                        <td class="transaction-amount negative">-$45.75</td>
+                                        <td><span class="status-badge status-active">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dec 09, 2023</td>
+                                        <td>Online Purchase</td>
+                                        <td>Shopping</td>
+                                        <td>***1234</td>
+                                        <td class="transaction-amount negative">-$299.99</td>
+                                        <td><span class="status-badge status-pending">Pending</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bills Page -->
+            <div class="page-content" id="bills">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                Upcoming Bills
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <strong>Electric Bill</strong>
+                                        <div class="text-muted">Due: Dec 20, 2023</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>$125.00</strong>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="status-badge status-pending">Due Soon</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-primary btn-sm">Pay Now</button>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <strong>Internet Bill</strong>
+                                        <div class="text-muted">Due: Dec 25, 2023</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>$89.99</strong>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="status-badge status-active">Scheduled</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-primary btn-sm">Modify</button>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <strong>Credit Card</strong>
+                                        <div class="text-muted">Due: Jan 05, 2024</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>$2,150.00</strong>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="status-badge status-active">Scheduled</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-primary btn-sm">Modify</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-card">
+                            <h5 class="text-primary-custom mb-3">Add New Bill</h5>
+                            <form>
+                                <div class="mb-3">
+                                    <label class="form-label">Payee Name</label>
+                                    <input type="text" class="form-control" placeholder="Enter payee name">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Amount</label>
+                                    <input type="number" class="form-control" step="0.01" placeholder="0.00">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Due Date</label>
+                                    <input type="date" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">From Account</label>
+                                    <select class="form-control">
+                                        <option>Checking - ***1234</option>
+                                        <option>Savings - ***5678</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Schedule Payment</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards Page -->
+            <div class="page-content" id="cards">
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="text-primary-custom">Platinum Card</h5>
+                                    <i class="bi bi-credit-card-2-front" style="font-size: 2rem; color: var(--primary-color);"></i>
+                                </div>
+                                <p class="text-muted">**** **** **** 1234</p>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Balance</small>
+                                        <div class="fw-bold">$2,150.00</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Limit</small>
+                                        <div class="fw-bold">$10,000.00</div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <span class="status-badge status-active">Active</span>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary btn-sm me-2">View Details</button>
+                                    <button class="btn btn-outline-primary btn-sm">Pay Balance</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="text-primary-custom">Debit Card</h5>
+                                    <i class="bi bi-credit-card" style="font-size: 2rem; color: var(--primary-color);"></i>
+                                </div>
+                                <p class="text-muted">**** **** **** 5678</p>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Account</small>
+                                        <div class="fw-bold">Checking</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Expires</small>
+                                        <div class="fw-bold">12/26</div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <span class="status-badge status-active">Active</span>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary btn-sm me-2">Manage</button>
+                                    <button class="btn btn-outline-primary btn-sm">Block Card</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card" style="border: 2px dashed #ddd;">
+                            <div class="card-body text-center">
+                                <i class="bi bi-plus-circle" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                                <h5 class="text-primary-custom">Apply for New Card</h5>
+                                <p class="text-muted">Get a new credit or debit card</p>
+                                <button class="btn btn-primary">Apply Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loans Page -->
+            <div class="page-content" id="loans">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Home Mortgage
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Remaining Balance</small>
+                                        <h4 class="text-primary-custom">$245,750.00</h4>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Monthly Payment</small>
+                                        <h5>$1,850.00</h5>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-6">
+                                        <small class="text-muted">Interest Rate</small>
+                                        <div>3.25% APR</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Next Payment</small>
+                                        <div>Jan 01, 2024</div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary-custom" style="width: 35%"></div>
+                                    </div>
+                                    <small class="text-muted">35% paid off</small>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary btn-sm me-2">Make Payment</button>
+                                    <button class="btn btn-outline-primary btn-sm">View Details</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Auto Loan
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Remaining Balance</small>
+                                        <h4 class="text-primary-custom">$18,250.00</h4>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Monthly Payment</small>
+                                        <h5>$425.00</h5>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-6">
+                                        <small class="text-muted">Interest Rate</small>
+                                        <div>4.5% APR</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Next Payment</small>
+                                        <div>Jan 15, 2024</div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary-custom" style="width: 70%"></div>
+                                    </div>
+                                    <small class="text-muted">70% paid off</small>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary btn-sm me-2">Make Payment</button>
+                                    <button class="btn btn-outline-primary btn-sm">View Details</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-card">
+                            <h5 class="text-primary-custom mb-3">Apply for New Loan</h5>
+                            <form class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label">Loan Type</label>
+                                    <select class="form-control">
+                                        <option>Personal Loan</option>
+                                        <option>Auto Loan</option>
+                                        <option>Home Loan</option>
+                                        <option>Business Loan</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Amount</label>
+                                    <input type="number" class="form-control" placeholder="Loan amount">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Term (Years)</label>
+                                    <select class="form-control">
+                                        <option>1 Year</option>
+                                        <option>3 Years</option>
+                                        <option>5 Years</option>
+                                        <option>10 Years</option>
+                                        <option>15 Years</option>
+                                        <option>30 Years</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary">Apply Now</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investments Page -->
+            <div class="page-content" id="investments">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="balance-card" style="background: var(--success-color);">
+                            <div class="balance-label">Portfolio Value</div>
+                            <div class="balance-amount">$125,890</div>
+                            <div class="balance-label">+$2,450 (1.98%)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="balance-card" style="background: var(--info-color);">
+                            <div class="balance-label">Today's Change</div>
+                            <div class="balance-amount">+$485</div>
+                            <div class="balance-label">+0.39%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="balance-card" style="background: var(--warning-color);">
+                            <div class="balance-label">YTD Return</div>
+                            <div class="balance-amount">+12.5%</div>
+                            <div class="balance-label">$13,920 gained</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="balance-card" style="background: var(--secondary-color);">
+                            <div class="balance-label">Cash Available</div>
+                            <div class="balance-amount">$5,240</div>
+                            <div class="balance-label">Ready to invest</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="chart-container">
+                            <h5 class="mb-3">Portfolio Performance</h5>
+                            <canvas id="portfolioChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Holdings
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>AAPL</span>
+                                    <span class="transaction-amount positive">+2.5%</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>MSFT</span>
+                                    <span class="transaction-amount positive">+1.8%</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>GOOGL</span>
+                                    <span class="transaction-amount negative">-0.5%</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>AMZN</span>
+                                    <span class="transaction-amount positive">+3.2%</span>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-primary btn-sm">View All Holdings</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Page -->
+            <div class="page-content" id="profile">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="bi bi-person-circle" style="font-size: 5rem; color: var(--primary-color);"></i>
+                                <h4 class="mt-3">John Doe</h4>
+                                <p class="text-muted">Premium Customer</p>
+                                <span class="status-badge status-active">Verified</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="form-card">
+                            <h5 class="text-primary-custom mb-4">Personal Information</h5>
+                            <form>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">First Name</label>
+                                            <input type="text" class="form-control" value="John">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Last Name</label>
+                                            <input type="text" class="form-control" value="Doe">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" value="john.doe@email.com">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Phone</label>
+                                    <input type="tel" class="form-control" value="(555) 123-4567">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Address</label>
+                                    <textarea class="form-control" rows="3">123 Main Street, Anytown, ST 12345</textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="page-content" id="settings">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-card">
+                            <h5 class="text-primary-custom mb-4">Security Settings</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Change Password</label>
+                                <input type="password" class="form-control" placeholder="Current password">
+                                <input type="password" class="form-control mt-2" placeholder="New password">
+                                <input type="password" class="form-control mt-2" placeholder="Confirm new password">
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" checked>
+                                    <label class="form-check-label">Two-Factor Authentication</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary">Update Security</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-card">
+                            <h5 class="text-primary-custom mb-4">Notification Preferences</h5>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" checked>
+                                    <label class="form-check-label">Email Notifications</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" checked>
+                                    <label class="form-check-label">SMS Alerts</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox">
+                                    <label class="form-check-label">Push Notifications</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" checked>
+                                    <label class="form-check-label">Transaction Alerts</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary">Save Preferences</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Page Navigation
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            document.querySelectorAll(`[data-page="${pageId}"]`).forEach(link => {
+                link.classList.add('active');
+            });
+            
+            // Update page title
+            const pageTitle = document.getElementById('pageTitle');
+            const pageTitles = {
+                'dashboard': 'Dashboard',
+                'accounts': 'Accounts',
+                'transfers': 'Transfers',
+                'transactions': 'Transaction History',
+                'bills': 'Bill Payment',
+                'cards': 'Cards',
+                'loans': 'Loans',
+                'investments': 'Investments',
+                'profile': 'Profile',
+                'settings': 'Settings'
+            };
+            pageTitle.textContent = pageTitles[pageId] || 'Dashboard';
+        }
+
+        // Navigation event listeners
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageId = this.getAttribute('data-page');
+                if (pageId) {
+                    showPage(pageId);
+                }
+            });
+        });
+
+        // Sidebar toggle for mobile
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        });
+
+        // Transfer form submission
+        document.getElementById('transferForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Transfer request submitted successfully!');
+        });
+
+        // Logout function
+        function logout() {
+            alert('Logged out successfully!');
+            // In a real application, this would redirect to login page
+        }
+
+        // Initialize charts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Spending Chart
+            const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+            new Chart(spendingCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Food & Dining', 'Transportation', 'Shopping', 'Utilities', 'Entertainment'],
+                    datasets: [{
+                        data: [1200, 800, 600, 400, 300],
+                        backgroundColor: [
+                            '#1e3c72',
+                            '#2a5298',
+                            '#ffd700',
+                            '#28a745',
+                            '#17a2b8'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Portfolio Chart (if investments page is loaded)
+            const portfolioCanvas = document.getElementById('portfolioChart');
+            if (portfolioCanvas) {
+                const portfolioCtx = portfolioCanvas.getContext('2d');
+                new Chart(portfolioCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Portfolio Value',
+                            data: [110000, 115000, 112000, 118000, 122000, 125890],
+                            borderColor: '#1e3c72',
+                            backgroundColor: 'rgba(30, 60, 114, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
