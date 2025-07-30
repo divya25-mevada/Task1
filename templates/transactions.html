@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureBank - Transaction History</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --accent-color: #ffd700;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --gradient-primary: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --sidebar-width: 250px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: var(--gradient-primary);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-brand {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--accent-color);
+        }
+
+        .sidebar-nav i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .navbar-dashboard {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+        }
+
+        .content-wrapper {
+            padding: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: 10px 10px 0 0;
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Filter Section */
+        .filter-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Transaction Table */
+        .transaction-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .transaction-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 1rem;
+        }
+
+        .transaction-table td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .transaction-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .transaction-amount.positive {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .transaction-amount.negative {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        .transaction-type {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .type-deposit {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .type-withdrawal {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .type-transfer {
+            background: var(--info-color);
+            color: white;
+        }
+
+        .type-payment {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        /* Form Controls */
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: bold;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+
+        /* Summary Cards */
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .summary-amount {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        /* Export Button */
+        .export-btn {
+            background: var(--success-color);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .export-btn:hover {
+            background: #218838;
+            color: white;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .content-wrapper {
+                padding: 1rem;
+            }
+
+            .transaction-table {
+                font-size: 0.875rem;
+            }
+
+            .summary-amount {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Utilities */
+        .text-primary-custom {
+            color: var(--primary-color) !important;
+        }
+
+        .bg-primary-custom {
+            background: var(--gradient-primary) !important;
+        }
+
+        .border-primary-custom {
+            border-color: var(--primary-color) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard') }}" class="sidebar-brand">
+                <i class="bi bi-bank"></i> SecureBank
+            </a>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="{{ url_for('dashboard') }}" class="nav-link"><i class="bi bi-house-door"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('accounts') }}" class="nav-link"><i class="bi bi-wallet"></i> Accounts</a></li>
+            <li><a href="{{ url_for('transfers') }}" class="nav-link"><i class="bi bi-arrow-left-right"></i> Transfers</a></li>
+            <li><a href="{{ url_for('transactions') }}" class="nav-link active"><i class="bi bi-list-ul"></i> Transactions</a></li>
+            <li><a href="{{ url_for('bills') }}" class="nav-link"><i class="bi bi-receipt"></i> Bill Payment</a></li>
+            <li><a href="{{ url_for('cards') }}" class="nav-link"><i class="bi bi-credit-card"></i> Cards</a></li>
+            <li><a href="{{ url_for('loans') }}" class="nav-link"><i class="bi bi-bank2"></i> Loans</a></li>
+            <li><a href="{{ url_for('investments') }}" class="nav-link"><i class="bi bi-graph-up"></i> Investments</a></li>
+            <li><a href="{{ url_for('profile') }}" class="nav-link"><i class="bi bi-person"></i> Profile</a></li>
+            <li><a href="{{ url_for('settings') }}" class="nav-link"><i class="bi bi-gear"></i> Settings</a></li>
+            <li><a href="{{ url_for('logout') }}" class="nav-link"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-dashboard">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-link d-md-none" id="sidebarToggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h4 class="mb-0 text-primary-custom">Transaction History</h4>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button class="btn export-btn me-3" onclick="exportTransactions()">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ session.name }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}">Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('settings') }}">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="summary-card">
+                        <div class="summary-label">Total Income</div>
+                        <div class="summary-amount text-success" id="totalIncome">$0.00</div>
+                        <div class="summary-label">This Month</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card">
+                        <div class="summary-label">Total Expenses</div>
+                        <div class="summary-amount text-danger" id="totalExpenses">$0.00</div>
+                        <div class="summary-label">This Month</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card">
+                        <div class="summary-label">Net Flow</div>
+                        <div class="summary-amount text-primary-custom" id="netFlow">$0.00</div>
+                        <div class="summary-label">This Month</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card">
+                        <div class="summary-label">Total Transactions</div>
+                        <div class="summary-amount text-primary-custom" id="totalTransactions">{{ transactions|length }}</div>
+                        <div class="summary-label">Total</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-card">
+                <h5 class="text-primary-custom mb-3">Filter Transactions</h5>
+                <form id="filterForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Account</label>
+                        <select class="form-control" id="accountFilter">
+                            <option value="">All Accounts</option>
+                            <option value="checking">Checking - ***1234</option>
+                            <option value="savings">Savings - ***5678</option>
+                            <option value="business">Business - ***9012</option>
+                            <option value="credit">Credit Card - ***1234</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Transaction Type</label>
+                        <select class="form-control" id="typeFilter">
+                            <option value="">All Types</option>
+                            <option value="deposit">Deposit</option>
+                            <option value="withdrawal">Withdrawal</option>
+                            <option value="transfer">Transfer</option>
+                            <option value="payment">Payment</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="fromDate">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="toDate">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Amount Range</label>
+                        <select class="form-control" id="amountFilter">
+                            <option value="">Any Amount</option>
+                            <option value="0-100">$0 - $100</option>
+                            <option value="100-500">$100 - $500</option>
+                            <option value="500-1000">$500 - $1,000</option>
+                            <option value="1000+">$1,000+</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Transaction History</span>
+                    <span class="badge bg-light text-dark" id="transactionCount">{{ transactions|length }} transactions</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table transaction-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th>Account</th>
+                                <th>Amount</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionTableBody">
+                            {% if transactions %}
+                                {% for transaction in transactions %}
+                                <tr data-transaction='{{ transaction | tojson }}'>
+                                    <td>{{ transaction.date }}</td>
+                                    <td>{{ transaction.description }}</td>
+                                    <td>
+                                        <span class="transaction-type type-{{ transaction.type }}">
+                                            {{ transaction.type.title() }}
+                                        </span>
+                                    </td>
+                                    <td>***{{ transaction.account[-4:] if transaction.account else '1234' }}</td>
+                                    <td class="transaction-amount {% if transaction.amount > 0 %}positive{% else %}negative{% endif %}">
+                                        {% if transaction.amount > 0 %}+{% endif %}${{ "%.2f"|format(transaction.amount|abs) }}
+                                    </td>
+                                    <td>${{ "%.2f"|format(transaction.balance) }}</td>
+                                    <td>
+                                        <span class="transaction-type {% if transaction.status == 'completed' %}type-deposit{% elif transaction.status == 'pending' %}type-payment{% else %}type-transfer{% endif %}">
+                                            {{ transaction.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewTransaction({{ transaction.id }})">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>
+                                    <p class="text-muted mt-2">No transactions found. Use the filters above to search for transactions.</p>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Sidebar toggle for mobile
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        });
+
+        // Filter form submission
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            applyFilters();
+        });
+
+        function applyFilters() {
+            const accountFilter = document.getElementById('accountFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const amountFilter = document.getElementById('amountFilter').value;
+
+            // Build query parameters
+            const params = new URLSearchParams();
+            if (accountFilter) params.append('account', accountFilter);
+            if (typeFilter) params.append('type', typeFilter);
+            if (fromDate) params.append('from_date', fromDate);
+            if (toDate) params.append('to_date', toDate);
+            if (amountFilter) params.append('amount_range', amountFilter);
+
+            // Fetch filtered transactions
+            fetch(`/api/transactions?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateTransactionTable(data);
+                    updateSummaryCards(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching transactions:', error);
+                });
+        }
+
+        function updateTransactionTable(transactions) {
+            const tbody = document.getElementById('transactionTableBody');
+            const transactionCount = document.getElementById('transactionCount');
+            
+            if (transactions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>
+                            <p class="text-muted mt-2">No transactions found matching your criteria.</p>
+                        </td>
+                    </tr>
+                `;
+                transactionCount.textContent = '0 transactions';
+                return;
+            }
+
+            tbody.innerHTML = transactions.map(transaction => `
+                <tr data-transaction='${JSON.stringify(transaction)}'>
+                    <td>${transaction.date}</td>
+                    <td>${transaction.description}</td>
+                    <td>
+                        <span class="transaction-type type-${transaction.type}">
+                            ${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                        </span>
+                    </td>
+                    <td>***${transaction.account.slice(-4) || '1234'}</td>
+                    <td class="transaction-amount ${transaction.amount > 0 ? 'positive' : 'negative'}">
+                        ${transaction.amount > 0 ? '+' : ''}$${Math.abs(transaction.amount).toFixed(2)}
+                    </td>
+                    <td>$${transaction.balance.toFixed(2)}</td>
+                    <td>
+                        <span class="transaction-type ${transaction.status === 'completed' ? 'type-deposit' : transaction.status === 'pending' ? 'type-payment' : 'type-transfer'}">
+                            ${transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewTransaction(${transaction.id})">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            transactionCount.textContent = `${transactions.length} transactions`;
+        }
+
+        function updateSummaryCards(transactions) {
+            const totalIncome = transactions
+                .filter(t => t.amount > 0)
+                .reduce((sum, t) => sum + t.amount, 0);
+            
+            const totalExpenses = Math.abs(transactions
+                .filter(t => t.amount < 0)
+                .reduce((sum, t) => sum + t.amount, 0));
+            
+            const netFlow = totalIncome - totalExpenses;
+
+            document.getElementById('totalIncome').textContent = `$${totalIncome.toFixed(2)}`;
+            document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
+            document.getElementById('netFlow').textContent = `$${netFlow.toFixed(2)}`;
+            document.getElementById('totalTransactions').textContent = transactions.length;
+        }
+
+        function viewTransaction(id) {
+            alert(`Viewing transaction details for ID: ${id}`);
+        }
+
+        function exportTransactions() {
+            // Get current filters
+            const params = new URLSearchParams();
+            const accountFilter = document.getElementById('accountFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const amountFilter = document.getElementById('amountFilter').value;
+
+            if (accountFilter) params.append('account', accountFilter);
+            if (typeFilter) params.append('type', typeFilter);
+            if (fromDate) params.append('from_date', fromDate);
+            if (toDate) params.append('to_date', toDate);
+            if (amountFilter) params.append('amount_range', amountFilter);
+
+            // Create CSV content
+            fetch(`/api/transactions?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    const csv = convertToCSV(data);
+                    downloadCSV(csv, 'transactions.csv');
+                })
+                .catch(error => {
+                    console.error('Error exporting transactions:', error);
+                    alert('Error exporting transactions. Please try again.');
+                });
+        }
+
+        function convertToCSV(transactions) {
+            const headers = ['Date', 'Description', 'Type', 'Account', 'Amount', 'Balance', 'Status'];
+            const csvContent = [
+                headers.join(','),
+                ...transactions.map(t => [
+                    t.date,
+                    `"${t.description}"`,
+                    t.type,
+                    t.account,
+                    t.amount,
+                    t.balance,
+                    t.status
+                ].join(','))
+            ].join('\n');
+            
+            return csvContent;
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Initialize summary cards on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const transactions = {{ transactions | tojson }};
+            updateSummaryCards(transactions);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureBank Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --accent-color: #ffd700;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --gradient-primary: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --sidebar-width: 250px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: var(--gradient-primary);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-brand {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--accent-color);
+        }
+
+        .sidebar-nav i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .navbar-dashboard {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+        }
+
+        .content-wrapper {
+            padding: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: 10px 10px 0 0;
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Balance Cards */
+        .balance-card {
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Transaction Table */
+        .transaction-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .transaction-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+
+        .transaction-table td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .transaction-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .transaction-amount.positive {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .transaction-amount.negative {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        /* Quick Actions */
+        .quick-action {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .quick-action:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+        }
+
+        .quick-action i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .quick-action h6 {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* Charts */
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .balance-amount {
+                font-size: 2rem;
+            }
+            
+            .content-wrapper {
+                padding: 1rem;
+            }
+        }
+
+        /* Utilities */
+        .text-primary-custom {
+            color: var(--primary-color) !important;
+        }
+
+        .bg-primary-custom {
+            background: var(--gradient-primary) !important;
+        }
+
+        .border-primary-custom {
+            border-color: var(--primary-color) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard') }}" class="sidebar-brand">
+                <i class="bi bi-bank"></i> SecureBank
+            </a>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="{{ url_for('dashboard') }}" class="nav-link active"><i class="bi bi-house-door"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('accounts') }}" class="nav-link"><i class="bi bi-wallet"></i> Accounts</a></li>
+            <li><a href="{{ url_for('transfers') }}" class="nav-link"><i class="bi bi-arrow-left-right"></i> Transfers</a></li>
+            <li><a href="{{ url_for('transactions') }}" class="nav-link"><i class="bi bi-list-ul"></i> Transactions</a></li>
+            <li><a href="{{ url_for('bills') }}" class="nav-link"><i class="bi bi-receipt"></i> Bill Payment</a></li>
+            <li><a href="{{ url_for('cards') }}" class="nav-link"><i class="bi bi-credit-card"></i> Cards</a></li>
+            <li><a href="{{ url_for('loans') }}" class="nav-link"><i class="bi bi-bank2"></i> Loans</a></li>
+            <li><a href="{{ url_for('investments') }}" class="nav-link"><i class="bi bi-graph-up"></i> Investments</a></li>
+            <li><a href="{{ url_for('profile') }}" class="nav-link"><i class="bi bi-person"></i> Profile</a></li>
+            <li><a href="{{ url_for('settings') }}" class="nav-link"><i class="bi bi-gear"></i> Settings</a></li>
+            <li><a href="{{ url_for('logout') }}" class="nav-link"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-dashboard">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-link d-md-none" id="sidebarToggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h4 class="mb-0 text-primary-custom">Dashboard</h4>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="dropdown">
+                        <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ session.name }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}">Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('settings') }}">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Balance Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="balance-card">
+                        <div class="balance-label">Checking Account</div>
+                        <div class="balance-amount">${{ "%.2f"|format(user.accounts.checking.balance) }}</div>
+                        <div class="balance-label">Account: {{ user.accounts.checking.number }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="balance-card">
+                        <div class="balance-label">Savings Account</div>
+                        <div class="balance-amount">${{ "%.2f"|format(user.accounts.savings.balance) }}</div>
+                        <div class="balance-label">Account: {{ user.accounts.savings.number }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="balance-card">
+                        <div class="balance-label">Credit Card</div>
+                        <div class="balance-amount">${{ "%.2f"|format(user.accounts.credit.balance) }}</div>
+                        <div class="balance-label">Available: ${{ "%.2f"|format(user.accounts.credit.limit - user.accounts.credit.balance) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="quick-action" onclick="window.location.href='{{ url_for('transfers') }}'">
+                        <i class="bi bi-arrow-left-right"></i>
+                        <h6>Transfer Money</h6>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="quick-action" onclick="window.location.href='{{ url_for('bills') }}'">
+                        <i class="bi bi-receipt"></i>
+                        <h6>Pay Bills</h6>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="quick-action" onclick="window.location.href='{{ url_for('cards') }}'">
+                        <i class="bi bi-credit-card"></i>
+                        <h6>Manage Cards</h6>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="quick-action" onclick="window.location.href='{{ url_for('transactions') }}'">
+                        <i class="bi bi-list-ul"></i>
+                        <h6>View Transactions</h6>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts and Recent Transactions -->
+            <div class="row">
+                <div class="col-md-8 mb-4">
+                    <div class="chart-container">
+                        <h5 class="mb-3">Spending Overview</h5>
+                        <canvas id="spendingChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Recent Transactions
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Grocery Store</span>
+                                <span class="transaction-amount negative">-$85.50</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Salary Deposit</span>
+                                <span class="transaction-amount positive">+$4,200.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Electric Bill</span>
+                                <span class="transaction-amount negative">-$125.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>ATM Withdrawal</span>
+                                <span class="transaction-amount negative">-$200.00</span>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('transactions') }}" class="btn btn-primary btn-sm">View All</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Sidebar toggle for mobile
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        });
+
+        // Initialize charts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Spending Chart
+            const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+            new Chart(spendingCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Food & Dining', 'Transportation', 'Shopping', 'Utilities', 'Entertainment'],
+                    datasets: [{
+                        data: [1200, 800, 600, 400, 300],
+                        backgroundColor: [
+                            '#1e3c72',
+                            '#2a5298',
+                            '#ffd700',
+                            '#28a745',
+                            '#17a2b8'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
